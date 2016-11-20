@@ -1,1 +1,74 @@
-<h1>Test server</h1>
+<html>
+
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12 text-center">
+                <h2>Current Status</h2>
+                <pre id="optput">
+                    Loading server status...
+                </pre>
+                <div class="btn btn-primary" id="start">Start Server</div>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script>
+        $(function() {
+            var servers = [{
+                address: 'mc.iante.xyz',
+                port: '25565'
+            }, {
+                address: 'mc.iante.xyz',
+                port: '25566'
+            }];
+
+            function make_async_request(server) {
+                return 'https://api.minetools.eu/ping/' + server.address + '/' + server.port;
+            }
+
+            var results = [],
+                ajaxes = [];
+
+            $.map(servers, function(i, obj) {
+                var xhr = $.ajax({
+                    url: make_async_request(i),
+                    dataType: 'json'
+                }).done(function(data) {
+                    results[data.key] = data.value;
+                    if (i == servers.length - 1) elaborate(results);
+                });
+                ajaxes.push(xhr);
+            });
+
+            $.when.apply(null, ajaxes).done(function() {
+                var results = $.map(ajaxes, function(data) {
+                    return data.responseJSON
+                })
+                console.log(results)
+                $('#optput').html(JSON.stringify(results))
+            });
+            $('#start').click(function() {
+                $(this).attr('disabled', 'disabled');
+                $(this).text('Starting...')
+                $.ajax('https://k6bfyajzdk.execute-api.eu-central-1.amazonaws.com/prod/start_minecraft')
+                    .done(function(data) {
+                        $(this).text('Server started');
+                    })
+                    .fail(function() {
+                        $(this).removeAttr('disabled');
+                        $(this).text('Try again');
+                    })
+            })
+        })
+    </script>
+</body>
+
+</html>
+
+
+<!--https://api.minetools.eu/ping/mc.iante.xyz/25565-->
